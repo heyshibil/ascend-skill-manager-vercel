@@ -6,6 +6,7 @@ import type {
   RunCodeResult,
   TestCase,
 } from "../../types/index.js";
+import { normalizeOutput } from "../../utils/normalizeOutput.js";
 
 // -- AWS Lambda Client --
 const lambdaClient = new LambdaClient({
@@ -147,8 +148,8 @@ export const executeCodeTest = async (
 
   let passedCases = 0;
   for (let i = 0; i < testCases.length; i++) {
-    const actual = (outputLines[i] || "").replace(/\s+/g, " ").trim();
-    const expected = (testCases[i]?.output || "").replace(/\s+/g, " ").trim();
+    const actual = normalizeOutput(outputLines[i] || "");
+    const expected = normalizeOutput(testCases[i]?.output || "");
     if (actual === expected) {
       passedCases++;
     }
@@ -197,8 +198,8 @@ export const runCodeTest = async (
 
   // validate actual outputs and expected outputs
   const results = testCases.map((tc, i) => {
-    const actual = (outputLines[i] || "").replace(/\s+/g, " ").trim();
-    const expected = (tc.output || "").replace(/\s+/g, " ").trim();
+    const actual = normalizeOutput(outputLines[i] || "");
+    const expected = normalizeOutput(tc.output || "");
     const passed = actual === expected;
     if (passed) passedCases++;
     return {
