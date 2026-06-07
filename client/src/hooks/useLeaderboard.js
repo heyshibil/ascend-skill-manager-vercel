@@ -10,8 +10,8 @@ export const useLeaderboard = (mode) => {
 
     initialPageParam: 1,
     // Tell TQ what the next page number is — returns undefined to signal "no more pages"
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? lastPage.page + 1 : undefined,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.hasMore ? allPages.length + 1 : undefined,
 
     staleTime: 120_000, // 2 min — matches server Redis stale:120
     gcTime: 600_000,    // 10 min — matches server Redis ttl:600

@@ -144,21 +144,52 @@ export const refreshLiquidityScore = async (
   const skills = await Skill.find({ userId }).select("currentScore");
   const newScore = computeLiquidityScore(skills);
 
-  const result = await User.findByIdAndUpdate(
-    userId,
-    {
-      $set: { "liquidityScore.current": newScore },
-      $push: {
-        "liquidityScore.history": { score: newScore, date: new Date() },
-      },
-    },
-    { returnDocument: "after" },
-  );
+  const user = await User.findById(userId);
 
-  if (!result) {
-    throw new AppError("User not found while updating liquidity score", 404);
+  if (!user) {
+    throw new AppError("User not found", 404);
   }
 
+  if (!user.liquidityScore) {
+    user.liquidityScore = { current: 0, history: [] };
+  }
+
+  const history = user.liquidityScore.history;
+  const lastEntry = history[history.length - 1];
+  const todayStr = new Date().toDateString();
+
+  // track liquidityScore change
+  let isChanged = false;
+
+  if (user.liquidityScore.current !== newScore) {
+    user.liquidityScore.current = newScore;
+    isChanged = true;
+  }
+
+  if (!lastEntry || lastEntry.score !== newScore) {
+    const lastEntryIsToday =
+      lastEntry && new Date(lastEntry.date).toDateString() === todayStr;
+
+    // Same day - update final score, no push
+    if (lastEntryIsToday) {
+      lastEntry.score = newScore;
+      lastEntry.date = new Date();
+    }
+    // Diff day - push new score
+    else {
+      history.push({ score: newScore, date: new Date() });
+
+      // Cap the history array
+      if (history.length > 100) {
+        history.shift();
+      }
+    }
+
+    user.markModified("liquidityScore");
+    isChanged = true;
+  }
+
+  if (isChanged) await user.save();
   return newScore;
 };
 
