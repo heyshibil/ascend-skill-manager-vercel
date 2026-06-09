@@ -14,41 +14,10 @@ import useUIStore from '../store/useUIStore';
 
 export default function LandingPage() {
   const setAppReady = useUIStore((state) => state.setAppReady);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const rafRef = useRef(null);
-  const lastScrollRef = useRef(0);
 
   useEffect(() => {
     setAppReady(true);
   }, [setAppReady]);
-
-  const handleScroll = useCallback(() => {
-    if (rafRef.current) return; // throttle via rAF
-
-    rafRef.current = requestAnimationFrame(() => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
-
-      // Only update if changed meaningfully (avoid excessive rerenders)
-      if (Math.abs(progress - lastScrollRef.current) > 0.001) {
-        lastScrollRef.current = progress;
-        setScrollProgress(progress);
-      }
-
-      rafRef.current = null;
-    });
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    // Initial calculation
-    handleScroll();
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [handleScroll]);
 
   // Smooth scroll for anchor links
   useEffect(() => {
@@ -70,7 +39,7 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       {/* Fixed Three.js background */}
-      <FluidCanvas scrollProgress={scrollProgress} />
+      <FluidCanvas />
 
       {/* Content layer above the fluid */}
       <div className="landing-content">

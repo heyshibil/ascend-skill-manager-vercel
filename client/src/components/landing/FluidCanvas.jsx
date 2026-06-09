@@ -141,7 +141,7 @@ void main() {
 }
 `;
 
-export default function FluidCanvas({ scrollProgress = 0 }) {
+export default function FluidCanvas() {
   const containerRef = useRef(null);
   const rendererRef  = useRef(null);
   const materialRef  = useRef(null);
@@ -149,12 +149,52 @@ export default function FluidCanvas({ scrollProgress = 0 }) {
   const mouseRef     = useRef({ x: 0.5, y: 0.5 });
   const targetMouseRef = useRef({ x: 0.5, y: 0.5 });
   const timeRef      = useRef(0);
-  const scrollRef    = useRef(0);
+  const isRenderingRef = useRef(true);
+  const restartRenderLoopRef = useRef(null);
 
-  // Sync scroll via ref — avoids triggering shader recompile
+  // Handle high-performance scroll locally by directly mutating the DOM node
   useEffect(() => {
-    scrollRef.current = scrollProgress;
-  }, [scrollProgress]);
+    const container = containerRef.current;
+    if (!container) return;
+
+    let rafId = null;
+
+    const handleScroll = () => {
+      if (rafId) return;
+
+      rafId = requestAnimationFrame(() => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+
+        // Fade out: 0->1 scroll maps to opacity 1->0, complete by 15% scroll
+        const opacity = Math.max(0, 1 - progress * 7);
+
+        container.style.opacity = opacity.toFixed(3);
+
+        // Pause or resume rendering loop dynamically to free up GPU resources
+        if (opacity <= 0) {
+          isRenderingRef.current = false;
+        } else {
+          if (!isRenderingRef.current) {
+            isRenderingRef.current = true;
+            restartRenderLoopRef.current?.();
+          }
+        }
+
+        rafId = null;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Initial call to set correct opacity on load
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   const handleMouseMove = useCallback((e) => {
     targetMouseRef.current.x = e.clientX / window.innerWidth;
@@ -171,7 +211,8 @@ export default function FluidCanvas({ scrollProgress = 0 }) {
       antialias: false,              // Not needed for fullscreen shader
       powerPreference: 'high-performance',
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Cap pixel ratio to 1.2 for fullscreen simplex noise.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
@@ -203,6 +244,8 @@ export default function FluidCanvas({ scrollProgress = 0 }) {
     let lastTime = performance.now();
 
     const animate = (now) => {
+      if (!isRenderingRef.current) return; // Halt the WebGL render loop when scrolled off-screen
+
       frameRef.current = requestAnimationFrame(animate);
 
       const delta = Math.min((now - lastTime) * 0.001, 0.05); // cap at 50ms
@@ -217,6 +260,13 @@ export default function FluidCanvas({ scrollProgress = 0 }) {
       material.uniforms.uMouse.value.set(mouseRef.current.x, mouseRef.current.y);
 
       renderer.render(scene, camera);
+    };
+
+    // Callback hook to resume rendering loop
+    restartRenderLoopRef.current = () => {
+      lastTime = performance.now(); // reset delta baseline to prevent animation jumps
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      frameRef.current = requestAnimationFrame(animate);
     };
 
     frameRef.current = requestAnimationFrame(animate);
@@ -245,14 +295,11 @@ export default function FluidCanvas({ scrollProgress = 0 }) {
     };
   }, [handleMouseMove]);
 
-  // Fade out: 0→1 scroll maps to opacity 1→0, complete by 15% scroll
-  const opacity = Math.max(0, 1 - scrollProgress * 7);
-
   return (
     <div
       ref={containerRef}
       className="fluid-canvas-container"
-      style={{ opacity }}
+      style={{ opacity: 1 }}
       aria-hidden="true"
     />
   );
