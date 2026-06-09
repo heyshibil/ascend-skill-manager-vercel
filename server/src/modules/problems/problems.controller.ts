@@ -9,13 +9,21 @@ export const listProblems = async (
 ) => {
   try {
     const { page, limit, skill, level, search } = req.query;
-    const result = await problemsService.listProblems(req.userId!, {
-      page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
+    const queryParams: {
+      page?: number;
+      limit?: number;
+      skill?: string;
+      level?: string;
+      search?: string;
+    } = {
       skill: skill as string,
       level: level as string,
       search: search as string,
-    });
+    };
+    if (page) queryParams.page = Number(page);
+    if (limit) queryParams.limit = Number(limit);
+
+    const result = await problemsService.listProblems(req.userId!, queryParams);
 
     res.status(200).json({ success: true, ...result });
   } catch (error) {

@@ -169,7 +169,7 @@ export const updateUserStatus = async (
 };
 
 export const getAdminDashboardStats = async (
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction,
 ) => {

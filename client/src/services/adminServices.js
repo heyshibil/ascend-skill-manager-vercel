@@ -15,29 +15,17 @@ export const adminService = {
 
   // Market
   createMarketSkill: async (formData) => {
-    const { data } = await API.post(
-      "http://localhost:5000/api/market/trending",
-      formData,
-      { withCredentials: true },
-    );
-
+    const { data } = await API.post("/market/trending", formData);
     return data;
   },
 
   updateMarketSkill: async (skillId, formData) => {
-    const { data } = await API.put(
-      `http://localhost:5000/api/market/trending/${skillId}`,
-      formData,
-      { withCredentials: true },
-    );
-
+    const { data } = await API.put(`/market/trending/${skillId}`, formData);
     return data;
   },
 
   deleteMarketSkill: async (skillId) => {
-    await API.delete(`http://localhost:5000/api/market/trending/${skillId}`, {
-      withCredentials: true,
-    });
+    await API.delete(`/market/trending/${skillId}`);
   },
 
   // Users Management

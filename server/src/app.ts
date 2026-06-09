@@ -20,6 +20,11 @@ import {
 
 const app: Application = express();
 
+// Health check endpoint for AWS environment monitoring
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "OK", timestamp: new Date() });
+});
+
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(helmet());
 app.use(morgan("dev"));

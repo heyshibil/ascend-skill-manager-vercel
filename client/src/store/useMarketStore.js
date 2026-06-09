@@ -10,9 +10,9 @@ export const useMarketStore = create((set, get) => ({
     // If connection already exists, dont need another
     if (get().sseConnections) return;
 
-    const eventSource = new EventSource(
-      "http://localhost:5000/api/market/stream",
-    );
+    const serverUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:5000/api";
+    const streamUrl = `${serverUrl.replace(/\/$/, "")}/market/stream`;
+    const eventSource = new EventSource(streamUrl);
 
     eventSource.onmessage = (event) => {
       const parsedData = JSON.parse(event.data);

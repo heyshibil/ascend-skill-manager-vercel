@@ -127,7 +127,7 @@ export const getProblem = async (questionId: string, userId: string) => {
 
 // -- Dry Run code --
 export const runProblem = async (
-  userId: string,
+  _userId: string,
   questionId: string,
   code: string,
 ): Promise<RunCodeResult> => {

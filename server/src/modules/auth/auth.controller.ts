@@ -3,12 +3,6 @@ import { scanQueue } from "../../queues/scan.queue.js";
 import { registerSchema, loginSchema } from "./auth.validation.js";
 import * as authService from "./auth.service.js";
 import { setTokenCookie } from "../../utils/setTokenCookie.js";
-import { QueueEvents } from "bullmq";
-import { redisConnection } from "../../config/redis.js";
-
-const queueEvents = new QueueEvents("GITHUB_SCAN", {
-  connection: redisConnection as any,
-});
 
 export const githubCallback = async (
   req: Request,
@@ -150,7 +144,7 @@ export const getScanStatus = async (req: Request, res: Response, next: NextFunct
       res.status(404).json({ error: "Job not found" });
       return;
     }
-    
+
     const state = await job.getState();
     if (state === "completed") {
       res.json({ status: "completed", result: job.returnvalue });

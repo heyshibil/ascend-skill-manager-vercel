@@ -1,3 +1,4 @@
+// @ts-ignore
 import pdfParse from "pdf-parse/lib/pdf-parse.js";
 import mammoth from "mammoth";
 import { SkillDefinition } from "../../models/SkillDefinition.js";
