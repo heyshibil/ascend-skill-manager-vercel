@@ -10,11 +10,17 @@ import FinalCTASection from '../components/landing/FinalCTASection';
 import LandingFooter from '../components/landing/LandingFooter';
 import FluidCanvas from '../components/landing/FluidCanvas';
 import '../components/landing/landing.css';
+import useUIStore from '../store/useUIStore';
 
 export default function LandingPage() {
+  const setAppReady = useUIStore((state) => state.setAppReady);
   const [scrollProgress, setScrollProgress] = useState(0);
   const rafRef = useRef(null);
   const lastScrollRef = useRef(0);
+
+  useEffect(() => {
+    setAppReady(true);
+  }, [setAppReady]);
 
   const handleScroll = useCallback(() => {
     if (rafRef.current) return; // throttle via rAF

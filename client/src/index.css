@@ -108,28 +108,35 @@ button {
    SCROLLBAR
    ================================================================ */
 
+/* Standard scrollbar properties for Firefox and modern engines */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #2D2D2A #0C0C0B;
+}
+
+/* Chrome, Edge, Safari, and Opera */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #0C0C0B; /* Dark background to match canvas */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-base);
-  border-radius: 10px;
+  background: #2D2D2A; /* Sleek modern grey thumb */
+  border-radius: 9999px;
+  border: 2px solid #0C0C0B; /* Creates space around the scrollbar thumb */
+  transition: background 0.2s ease-in-out;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-strong);
+  background: #2563EB; /* Primary accent color on hover */
 }
 
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-base) transparent;
+::-webkit-scrollbar-thumb:active {
+  background: #1D4ED8; /* Deep primary color on click */
 }
 
 /* ================================================================
@@ -164,4 +171,33 @@ button {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--border-base);
+}
+
+/* ================================================================
+   PREMIUM LOADER ANIMATIONS
+   ================================================================ */
+
+@keyframes loader-slide {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-loader-slide {
+  animation: loader-slide 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+/* Respect user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-loader-slide {
+    animation: none !important;
+    left: 25% !important;
+    width: 50% !important;
+  }
+  .animate-pulse-subtle {
+    animation: none !important;
+  }
+  .transition-opacity {
+    transition-duration: 150ms !important;
+  }
 }
