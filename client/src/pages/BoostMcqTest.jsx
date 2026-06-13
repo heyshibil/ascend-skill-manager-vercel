@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast, Toaster } from "sonner";
 import { verificationService } from "../services/verificationService";
-import { Progress } from "../components/ui/progress";
+import { Progress } from "../components/ui/Progress";
 import { useSkillStore } from "../store/useSkillStore";
 
 export default function BoostMcqTest() {

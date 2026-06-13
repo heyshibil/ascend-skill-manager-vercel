@@ -1,5 +1,5 @@
-import { useRef, useEffect, useCallback } from 'react';
-import * as THREE from 'three';
+import { useRef, useEffect, useCallback } from "react";
+import * as THREE from "three";
 
 // ─── Pure Fluid Shader — No Particles ────────────────────────────────────────
 // Elegant blue fluid energy on a pure black canvas.
@@ -143,12 +143,12 @@ void main() {
 
 export default function FluidCanvas() {
   const containerRef = useRef(null);
-  const rendererRef  = useRef(null);
-  const materialRef  = useRef(null);
-  const frameRef     = useRef(null);
-  const mouseRef     = useRef({ x: 0.5, y: 0.5 });
+  const rendererRef = useRef(null);
+  const materialRef = useRef(null);
+  const frameRef = useRef(null);
+  const mouseRef = useRef({ x: 0.5, y: 0.5 });
   const targetMouseRef = useRef({ x: 0.5, y: 0.5 });
-  const timeRef      = useRef(0);
+  const timeRef = useRef(0);
   const isRenderingRef = useRef(true);
   const restartRenderLoopRef = useRef(null);
 
@@ -164,7 +164,8 @@ export default function FluidCanvas() {
 
       rafId = requestAnimationFrame(() => {
         const scrollTop = window.scrollY;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const docHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
         const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
 
         // Fade out: 0->1 scroll maps to opacity 1->0, complete by 15% scroll
@@ -186,12 +187,12 @@ export default function FluidCanvas() {
       });
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
     // Initial call to set correct opacity on load
     handleScroll();
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
       if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
@@ -208,8 +209,8 @@ export default function FluidCanvas() {
     // ── WebGL Renderer ──────────────────────────────────────────
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
-      antialias: false,              // Not needed for fullscreen shader
-      powerPreference: 'high-performance',
+      antialias: false, // Not needed for fullscreen shader
+      powerPreference: "high-performance",
     });
     // Cap pixel ratio to 1.2 for fullscreen simplex noise.
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
@@ -220,20 +221,22 @@ export default function FluidCanvas() {
 
     // ── Orthographic camera for fullscreen quad ─────────────────
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const scene  = new THREE.Scene();
+    const scene = new THREE.Scene();
 
     // ── Fullscreen triangle (more efficient than quad) ──────────
     const geometry = new THREE.PlaneGeometry(2, 2);
     const material = new THREE.ShaderMaterial({
-      vertexShader:   FLUID_VERT,
+      vertexShader: FLUID_VERT,
       fragmentShader: FLUID_FRAG,
       uniforms: {
-        uTime:       { value: 0 },
-        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-        uMouse:      { value: new THREE.Vector2(0.5, 0.5) },
+        uTime: { value: 0 },
+        uResolution: {
+          value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+        },
+        uMouse: { value: new THREE.Vector2(0.5, 0.5) },
       },
       transparent: true,
-      depthWrite:  false,
+      depthWrite: false,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -253,11 +256,16 @@ export default function FluidCanvas() {
       timeRef.current += delta;
 
       // Lerp mouse for smooth, lag-free response
-      mouseRef.current.x += (targetMouseRef.current.x - mouseRef.current.x) * 0.06;
-      mouseRef.current.y += (targetMouseRef.current.y - mouseRef.current.y) * 0.06;
+      mouseRef.current.x +=
+        (targetMouseRef.current.x - mouseRef.current.x) * 0.06;
+      mouseRef.current.y +=
+        (targetMouseRef.current.y - mouseRef.current.y) * 0.06;
 
       material.uniforms.uTime.value = timeRef.current;
-      material.uniforms.uMouse.value.set(mouseRef.current.x, mouseRef.current.y);
+      material.uniforms.uMouse.value.set(
+        mouseRef.current.x,
+        mouseRef.current.y,
+      );
 
       renderer.render(scene, camera);
     };
@@ -272,20 +280,21 @@ export default function FluidCanvas() {
     frameRef.current = requestAnimationFrame(animate);
 
     // ── Listeners ───────────────────────────────────────────────
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
 
     const handleResize = () => {
-      const w = window.innerWidth, h = window.innerHeight;
+      const w = window.innerWidth,
+        h = window.innerHeight;
       renderer.setSize(w, h);
       material.uniforms.uResolution.value.set(w, h);
     };
-    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener("resize", handleResize, { passive: true });
 
     // ── Cleanup ─────────────────────────────────────────────────
     return () => {
       cancelAnimationFrame(frameRef.current);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("resize", handleResize);
       geometry.dispose();
       material.dispose();
       renderer.dispose();

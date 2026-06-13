@@ -8,8 +8,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "../components/ui/tabs";
-import { Progress } from "../components/ui/progress";
+} from "../components/ui/Tabs";
+import { Progress } from "../components/ui/Progress";
 import useAuthStore from "../store/useAuthStore";
 
 export default function VerificationTest() {
