@@ -27,8 +27,13 @@ export const authenticate = async (
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
       userId: string;
     };
+    // new
+    console.log("AUTH DEBUG decoded:", decoded);
 
     const user = await User.findById(decoded.userId).select("status").lean();
+
+    // new
+    console.log("AUTH DEBUG user:", user);
 
     if (!user) throw new AppError("User no longer exists", 401);
 
