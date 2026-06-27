@@ -14,6 +14,7 @@ const questionSchema = new Schema<IQuestion & Document>(
     topic: { type: String, required: true },
     type: { type: String, enum: ["mcq", "code"], required: true },
     question: { type: String },
+    isHidden: { type: Boolean, default: false, index: true },
 
     // MCQ Fields
     options: [{ type: String }],

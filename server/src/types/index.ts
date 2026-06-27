@@ -104,6 +104,7 @@ export interface IQuestion extends IBaseEntity {
   starterCode?: string;
   validationScript?: string;
   testCases?: ITestCase[];
+  isHidden?: Boolean;
 }
 
 // TestHistory

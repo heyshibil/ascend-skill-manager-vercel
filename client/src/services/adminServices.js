@@ -13,6 +13,30 @@ export const adminService = {
     return data;
   },
 
+  // Questions Management (view / edit / soft-delete / hard-delete)
+  getAllQuestions: async (params = {}) => {
+    const { data } = await API.get("/admin/questions", { params });
+    return data;
+  },
+
+  updateQuestion: async (id, payload) => {
+    const { data } = await API.patch(`/admin/questions/${id}`, payload);
+    return data;
+  },
+
+  // pass isHidden: true to hide, isHidden: false to show
+  toggleQuestionVisibility: async (id, isHidden) => {
+    const { data } = await API.patch(`/admin/questions/${id}/visibility`, {
+      isHidden,
+    });
+    return data;
+  },
+
+  deleteQuestion: async (id) => {
+    const { data } = await API.delete(`/admin/questions/${id}`);
+    return data;
+  },
+
   // Market
   createMarketSkill: async (formData) => {
     const { data } = await API.post("/market/trending", formData);

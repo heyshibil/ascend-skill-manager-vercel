@@ -10,6 +10,7 @@ import {
   TrendingUp,
   HelpCircle,
   LogOut,
+  List,
 } from "lucide-react";
 import useAuthStore from "../store/useAuthStore";
 import LogoutModal from "../components/LogoutModal";
@@ -73,7 +74,10 @@ export default function AdminLayout() {
             <TrendingUp className="w-4 h-4" /> Market
           </NavLink>
           <NavLink to="/admin/questions" className={navItemClass}>
-            <HelpCircle className="w-4 h-4" /> Questions
+            <HelpCircle className="w-4 h-4" /> Seed questions
+          </NavLink>
+          <NavLink to="/admin/questions/viewer" className={navItemClass}>
+            <List className="w-4 h-4" /> View questions
           </NavLink>
         </nav>
 

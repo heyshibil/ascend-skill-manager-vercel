@@ -18,6 +18,7 @@ import AdminRoute from "./components/AdminRoute";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import QuestionsManager from "./pages/admin/QuestionsManager";
+import QuestionsViewer from "./pages/admin/QuestionsViewer";
 import AdminMarket from "./pages/admin/AdminMarket";
 import UsersManagement from "./pages/admin/UsersManagement";
 import AdminSkills from "./pages/admin/AdminSkills";
@@ -92,6 +93,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <AdminDashboard /> },
               { path: "questions", element: <QuestionsManager /> },
+              { path: "questions/viewer", element: <QuestionsViewer /> },
               { path: "market", element: <AdminMarket /> },
               { path: "users", element: <UsersManagement /> },
               { path: "skills", element: <AdminSkills /> },

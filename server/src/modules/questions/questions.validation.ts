@@ -31,3 +31,34 @@ const codeSchema = baseQuestionSchema.extend({
 export const bulkQuestionsSchema = z.array(
   z.discriminatedUnion("type", [mcqSchema, codeSchema]),
 );
+
+// Update validation
+export const updateQuestionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("mcq"),
+    skill: z.string().optional(),
+    level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    topic: z.string().optional(),
+    question: z.string().optional(),
+    options: z.array(z.string()).length(4).optional(),
+    correctAnswerIndex: z.number().min(0).max(3).optional(),
+  }),
+  z.object({
+    type: z.literal("code"),
+    skill: z.string().optional(),
+    level: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+    topic: z.string().optional(),
+    question: z.string().optional(),
+    starterCode: z.string().optional(),
+    validationScript: z.string().optional(),
+    testCases: z
+      .array(z.object({ input: z.string(), output: z.string() }))
+      .min(1)
+      .optional(),
+  }),
+]);
+
+// hide/show validation
+export const visibilitySchema = z.object({
+  isHidden: z.boolean(),
+});
