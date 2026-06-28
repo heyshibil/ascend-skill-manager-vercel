@@ -41,7 +41,11 @@ export const listProblems = async (
   const limit = Math.min(50, Math.max(1, query.limit || 20));
   const skip = (page - 1) * limit;
 
-  const filter: Record<string, any> = { type: "code" };
+  const filter: Record<string, any> = {
+    type: "code",
+    isVerified: true,
+    isHidden: { $ne: true },
+  };
 
   if (query.skill) {
     filter.skill = query.skill;
@@ -98,7 +102,7 @@ export const listProblems = async (
 // -- Get single problem detail --
 export const getProblem = async (questionId: string, userId: string) => {
   const problem = await Question.findOne(
-    { questionId, type: "code" },
+    { questionId, type: "code", isVerified: true, isHidden: { $ne: true } },
     { correctAnswerIndex: 0 },
   ).lean();
 
@@ -131,7 +135,12 @@ export const runProblem = async (
   questionId: string,
   code: string,
 ): Promise<RunCodeResult> => {
-  const problem = await Question.findOne({ questionId, type: "code" });
+  const problem = await Question.findOne({
+    questionId,
+    type: "code",
+    isVerified: true,
+    isHidden: { $ne: true },
+  });
 
   if (!problem || !problem.testCases) {
     throw new AppError("Problem not found or has no test cases.", 404);
@@ -205,7 +214,12 @@ export const submitProblem = async (
   questionId: string,
   code: string,
 ) => {
-  const problem = await Question.findOne({ questionId, type: "code" });
+  const problem = await Question.findOne({
+    questionId,
+    type: "code",
+    isVerified: true,
+    isHidden: { $ne: true },
+  });
 
   if (!problem || !problem.testCases) {
     throw new AppError("Problem not found or has no test cases.", 404);
