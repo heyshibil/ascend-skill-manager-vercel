@@ -19,6 +19,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import QuestionsManager from "./pages/admin/QuestionsManager";
 import QuestionsViewer from "./pages/admin/QuestionsViewer";
+import RunCodeQuestions from "./pages/admin/RunCodeQuestions";
 import AdminMarket from "./pages/admin/AdminMarket";
 import UsersManagement from "./pages/admin/UsersManagement";
 import AdminSkills from "./pages/admin/AdminSkills";
@@ -94,6 +95,7 @@ export const router = createBrowserRouter([
               { index: true, element: <AdminDashboard /> },
               { path: "questions", element: <QuestionsManager /> },
               { path: "questions/viewer", element: <QuestionsViewer /> },
+              { path: "questions/run", element: <RunCodeQuestions /> },
               { path: "market", element: <AdminMarket /> },
               { path: "users", element: <UsersManagement /> },
               { path: "skills", element: <AdminSkills /> },

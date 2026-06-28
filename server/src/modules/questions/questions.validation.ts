@@ -62,3 +62,8 @@ export const updateQuestionSchema = z.discriminatedUnion("type", [
 export const visibilitySchema = z.object({
   isHidden: z.boolean(),
 });
+
+// verified status validation
+export const verifiedSchema = z.object({
+  isVerified: z.boolean(),
+});

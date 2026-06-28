@@ -5,8 +5,11 @@ import {
   bulkQuestionsSchema,
   updateQuestionSchema,
   visibilitySchema,
+  verifiedSchema,
 } from "./questions.validation.js";
 import { AppError } from "../../middlewares/error.middleware.js";
+import { resolveRuntime } from "../../utils/runtimeResolver.js";
+import { runCodeTest } from "../verification/compiler.service.js";
 
 
 export const seedBulkQuestions = async (
@@ -225,6 +228,63 @@ export const deleteQuestion = async (
     res.status(200).json({
       success: true,
       message: "Question permanently deleted",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin-only: run a code question against its test cases via Lambda
+export const adminRunCode = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const question = await Question.findById(req.params.id);
+    if (!question || question.type !== "code") {
+      throw new AppError("Code question not found", 404);
+    }
+    if (!question.testCases || question.testCases.length === 0) {
+      throw new AppError("Question has no test cases", 400);
+    }
+
+    const { code } = req.body;
+    if (!code) throw new AppError("Code is required", 400);
+
+    const runtime = resolveRuntime(question.skill);
+    const result = await runCodeTest(code, question.testCases, runtime);
+
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin-only: toggle isVerified status on a question
+export const toggleVerified = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { isVerified } = verifiedSchema.parse(req.body);
+
+    const updated = await Question.findByIdAndUpdate(
+      req.params.id,
+      { $set: { isVerified } },
+      { new: true },
+    );
+    if (!updated) throw new AppError("Question not found", 404);
+
+    const action = isVerified
+      ? "marked as verified"
+      : "verification status removed";
+
+    res.status(200).json({
+      success: true,
+      message: `Question ${action}`,
+      data: { isVerified: updated.isVerified },
     });
   } catch (error) {
     next(error);
