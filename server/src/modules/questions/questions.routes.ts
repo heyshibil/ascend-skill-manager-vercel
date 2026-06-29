@@ -9,6 +9,8 @@ import {
   updateQuestion,
   toggleVisibility,
   deleteQuestion,
+  adminRunCode,
+  toggleVerified,
 } from "./questions.controller.js";
 
 const router = Router();
@@ -19,6 +21,11 @@ router.get("/", authenticate, isAdmin, getAllQuestions);
 router.get("/:id", authenticate, isAdmin, getQuestionById);
 router.patch("/:id", authenticate, isAdmin, updateQuestion);
 router.patch("/:id/visibility", authenticate, isAdmin, toggleVisibility);
+router.patch("/:id/verified", authenticate, isAdmin, toggleVerified);
 router.delete("/:id", authenticate, isAdmin, deleteQuestion);
 
+// Admin run-code: no rate limiter — auth + isAdmin only
+router.post("/:id/run", authenticate, isAdmin, adminRunCode);
+
 export default router;
+

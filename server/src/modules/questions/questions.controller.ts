@@ -5,9 +5,11 @@ import {
   bulkQuestionsSchema,
   updateQuestionSchema,
   visibilitySchema,
+  verifiedSchema,
 } from "./questions.validation.js";
 import { AppError } from "../../middlewares/error.middleware.js";
-
+import { resolveRuntime } from "../../utils/runtimeResolver.js";
+import { runCodeTest } from "../verification/compiler.service.js";
 
 export const seedBulkQuestions = async (
   req: Request,
@@ -88,23 +90,37 @@ export const getAllQuestions = async (
   next: NextFunction,
 ) => {
   try {
-    const { page = 1, limit = 20, skill, level, type, search, showHidden } =
-      req.query;
+    const {
+      page = 1,
+      limit = 20,
+      skill,
+      level,
+      type,
+      search,
+      showHidden,
+      isVerified,
+      sort,
+    } = req.query;
 
     const filter: Record<string, any> = {};
 
     if (showHidden === "true") {
-      filter.isHidden = true;          // ONLY hidden questions
+      filter.isHidden = true; // ONLY hidden questions
     } else {
       filter.isHidden = { $ne: true }; // ONLY visible questions
     }
-    if (skill) filter.skill = skill;
+
+    if (isVerified === "true") filter.isVerified = true;
+    if (isVerified === "false") filter.isVerified = { $ne: true };
+    if (skill) filter.skill = { $regex: new RegExp(`^${skill}$`, "i") };
     if (level) filter.level = level;
     if (type) filter.type = type;
     if (search) {
       filter.$or = [
         { question: { $regex: search, $options: "i" } },
+        { skill: { $regex: search, $options: "i" } },
         { topic: { $regex: search, $options: "i" } },
+        { level: { $regex: search, $options: "i" } },
         { questionId: { $regex: search, $options: "i" } },
       ];
     }
@@ -112,9 +128,18 @@ export const getAllQuestions = async (
     const pageNum = Number(page);
     const limitNum = Number(limit);
 
+    let sortObj: Record<string, any> = { createdAt: -1 };
+    if (sort === "old") {
+      sortObj = { createdAt: 1 };
+    } else if (sort === "verified") {
+      sortObj = { isVerified: -1, createdAt: -1 };
+    } else if (sort === "unverified") {
+      sortObj = { isVerified: 1, createdAt: -1 };
+    }
+
     const [questions, total] = await Promise.all([
       Question.find(filter)
-        .sort({ createdAt: -1 })
+        .sort(sortObj)
         .skip((pageNum - 1) * limitNum)
         .limit(limitNum)
         .lean(),
@@ -225,6 +250,63 @@ export const deleteQuestion = async (
     res.status(200).json({
       success: true,
       message: "Question permanently deleted",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin-only: run a code question against its test cases via Lambda
+export const adminRunCode = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const question = await Question.findById(req.params.id);
+    if (!question || question.type !== "code") {
+      throw new AppError("Code question not found", 404);
+    }
+    if (!question.testCases || question.testCases.length === 0) {
+      throw new AppError("Question has no test cases", 400);
+    }
+
+    const { code } = req.body;
+    if (!code) throw new AppError("Code is required", 400);
+
+    const runtime = resolveRuntime(question.skill);
+    const result = await runCodeTest(code, question.testCases, runtime);
+
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin-only: toggle isVerified status on a question
+export const toggleVerified = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { isVerified } = verifiedSchema.parse(req.body);
+
+    const updated = await Question.findByIdAndUpdate(
+      req.params.id,
+      { $set: { isVerified } },
+      { new: true },
+    );
+    if (!updated) throw new AppError("Question not found", 404);
+
+    const action = isVerified
+      ? "marked as verified"
+      : "verification status removed";
+
+    res.status(200).json({
+      success: true,
+      message: `Question ${action}`,
+      data: { isVerified: updated.isVerified },
     });
   } catch (error) {
     next(error);

@@ -37,6 +37,20 @@ export const adminService = {
     return data;
   },
 
+  // Admin run-code: executes a code question via Lambda (no rate limit)
+  adminRunCodeQuestion: async (id, code) => {
+    const { data } = await API.post(`/admin/questions/${id}/run`, { code });
+    return data;
+  },
+
+  // pass isVerified: true to verify, isVerified: false to unverify
+  toggleQuestionVerified: async (id, isVerified) => {
+    const { data } = await API.patch(`/admin/questions/${id}/verified`, {
+      isVerified,
+    });
+    return data;
+  },
+
   // Market
   createMarketSkill: async (formData) => {
     const { data } = await API.post("/market/trending", formData);

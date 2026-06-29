@@ -6,7 +6,10 @@ import type {
   RunCodeResult,
   TestCase,
 } from "../../types/index.js";
-import { normalizeOutput } from "../../utils/normalizeOutput.js";
+import {
+  parseOutputValue,
+  isDeepEqual,
+} from "../../utils/normalizeOutput.js";
 
 // -- AWS Lambda Client --
 const lambdaClient = new LambdaClient({
@@ -148,9 +151,9 @@ export const executeCodeTest = async (
 
   let passedCases = 0;
   for (let i = 0; i < testCases.length; i++) {
-    const actual = normalizeOutput(outputLines[i] || "");
-    const expected = normalizeOutput(testCases[i]?.output || "");
-    if (actual === expected) {
+    const actualVal = parseOutputValue(outputLines[i] || "");
+    const expectedVal = parseOutputValue(testCases[i]?.output || "");
+    if (isDeepEqual(actualVal, expectedVal)) {
       passedCases++;
     }
   }
@@ -198,9 +201,9 @@ export const runCodeTest = async (
 
   // validate actual outputs and expected outputs
   const results = testCases.map((tc, i) => {
-    const actual = normalizeOutput(outputLines[i] || "");
-    const expected = normalizeOutput(tc.output || "");
-    const passed = actual === expected;
+    const actualVal = parseOutputValue(outputLines[i] || "");
+    const expectedVal = parseOutputValue(tc.output || "");
+    const passed = isDeepEqual(actualVal, expectedVal);
     if (passed) passedCases++;
     return {
       input: tc.input,

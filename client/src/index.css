@@ -111,7 +111,12 @@ button {
 /* Standard scrollbar properties for Firefox and modern engines */
 html {
   scrollbar-width: thin;
-  scrollbar-color: #2D2D2A #0C0C0B;
+  scrollbar-color: var(--border-strong) var(--bg-canvas);
+}
+
+.theme-dark {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--bg-canvas);
 }
 
 /* Chrome, Edge, Safari, and Opera */
@@ -120,23 +125,46 @@ html {
   height: 8px;
 }
 
+/* Default / Light Mode Scrollbar (Admin) */
 ::-webkit-scrollbar-track {
-  background: #0C0C0B; /* Dark background to match canvas */
+  background: var(--bg-canvas);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2D2D2A; /* Sleek modern grey thumb */
+  background: var(--border-strong);
   border-radius: 9999px;
-  border: 2px solid #0C0C0B; /* Creates space around the scrollbar thumb */
+  border: 2px solid var(--bg-canvas);
   transition: background 0.2s ease-in-out;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2563EB; /* Primary accent color on hover */
+  background: var(--accent);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background: #1D4ED8; /* Deep primary color on click */
+  background: var(--accent-hover);
+}
+
+/* Scoped Dark Mode Scrollbar (User) */
+.theme-dark ::-webkit-scrollbar-track,
+.theme-dark::-webkit-scrollbar-track {
+  background: var(--bg-canvas);
+}
+
+.theme-dark ::-webkit-scrollbar-thumb,
+.theme-dark::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid var(--bg-canvas);
+}
+
+.theme-dark ::-webkit-scrollbar-thumb:hover,
+.theme-dark::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+.theme-dark ::-webkit-scrollbar-thumb:active,
+.theme-dark::-webkit-scrollbar-thumb:active {
+  background: var(--accent-hover);
 }
 
 /* ================================================================

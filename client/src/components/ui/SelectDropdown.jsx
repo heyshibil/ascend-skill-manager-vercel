@@ -26,7 +26,7 @@ export default function SelectDropdown({ options, value, onChange, placeholder =
     <div className={`relative ${className}`} ref={ref}>
       <button
         onClick={() => setOpen((p) => !p)}
-        className="flex items-center gap-2 border rounded-[var(--radius-md)] px-3 h-9 text-[13px] min-w-[140px] transition-all"
+        className="flex items-center gap-2 border rounded-[var(--radius-md)] px-3 h-9 text-[13px] w-full transition-all"
         style={{
           background: "var(--bg-raised)",
           borderColor: open ? "var(--accent)" : "var(--border-base)",

@@ -18,7 +18,7 @@ export default function VerifyEmail() {
 
         // Wait 2 seconds, then redirect to login with the success flag we built!
         setTimeout(() => {
-          navigate("/?verified=true");
+          navigate("/login?verified=true");
         }, 2000);
       } catch (error) {
         setStatus("Verification failed. The link may be expired or invalid.");

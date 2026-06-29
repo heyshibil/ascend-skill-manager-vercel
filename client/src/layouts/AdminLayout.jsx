@@ -11,6 +11,7 @@ import {
   HelpCircle,
   LogOut,
   List,
+  Terminal,
 } from "lucide-react";
 import useAuthStore from "../store/useAuthStore";
 import LogoutModal from "../components/LogoutModal";
@@ -73,11 +74,14 @@ export default function AdminLayout() {
           <NavLink to="/admin/market" className={navItemClass}>
             <TrendingUp className="w-4 h-4" /> Market
           </NavLink>
-          <NavLink to="/admin/questions" className={navItemClass}>
+          <NavLink to="/admin/questions" end className={navItemClass}>
             <HelpCircle className="w-4 h-4" /> Seed questions
           </NavLink>
           <NavLink to="/admin/questions/viewer" className={navItemClass}>
             <List className="w-4 h-4" /> View questions
+          </NavLink>
+          <NavLink to="/admin/questions/run" className={navItemClass}>
+            <Terminal className="w-4 h-4" /> Run code
           </NavLink>
         </nav>
 
