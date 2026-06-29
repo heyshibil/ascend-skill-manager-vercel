@@ -14,6 +14,7 @@ import SkillSelect from "./pages/SkillSelect";
 import VerificationTest from "./pages/VerificationTest";
 import ScoreReport from "./pages/ScoreReport";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
 import AdminRoute from "./components/AdminRoute";
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -37,8 +38,13 @@ export const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <Suspense fallback={<div style={{ background: '#0C0C0B', minHeight: '100vh' }} />}><LandingPage /></Suspense> },
-      { path: "login", element: <Login /> },
+      {
+        element: <PublicRoute />,
+        children: [
+          { index: true, element: <Suspense fallback={<div style={{ background: '#0C0C0B', minHeight: '100vh' }} />}><LandingPage /></Suspense> },
+          { path: "login", element: <Login /> },
+        ],
+      },
       {
         path: "verify-email/:token",
         element: <VerifyEmail />,

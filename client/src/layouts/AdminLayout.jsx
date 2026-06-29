@@ -27,7 +27,7 @@ export default function AdminLayout() {
   const handleLogout = async () => {
     setIsLogoutModalOpen(false);
     await logout();
-    navigate("/");
+    navigate("/login");
   };
 
   const navItemClass = ({ isActive }) =>

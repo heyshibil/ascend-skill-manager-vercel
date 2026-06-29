@@ -14,7 +14,7 @@ const AdminRoute = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (user?.role !== "admin") {

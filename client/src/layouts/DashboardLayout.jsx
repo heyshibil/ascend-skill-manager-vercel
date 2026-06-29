@@ -47,7 +47,7 @@ export default function DashboardLayout() {
   const handleLogout = async () => {
     setIsLogoutModalOpen(false);
     await logout();
-    navigate("/");
+    navigate("/login");
   };
 
   const navItemClass = ({ isActive }) =>
