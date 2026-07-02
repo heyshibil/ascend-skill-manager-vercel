@@ -97,6 +97,7 @@ export const findByQuestionId = async (questionId: string) => {
   };
 };
 
+// Find random MCQ questions and code Question
 export const findRandomQuestions = async (params: {
   skill: string;
   type: "mcq" | "code";
@@ -379,4 +380,9 @@ export const findManyQuestionsForGrading = async (questionIds: string[]) => {
       correctAnswerIndex: true,
     },
   });
+};
+
+// Count question by types - admin dashboard
+export const countQuestionsByType = async (type: "mcq" | "code") => {
+  return prisma.question.count({ where: { type } });
 };

@@ -12,10 +12,10 @@ import type {
 } from "./user.validation.js";
 import { UserProblemStats } from "../../models/UserProblemStats.js";
 import { SkillDefinition } from "../../models/SkillDefinition.js";
-import { Question } from "../../models/Question.js";
 import type { ChartPeriod } from "../../types/index.js";
 import { getEffectiveStreak } from "../problems/problems.service.js";
 import { withCache } from "../../utils/cache.js";
+import { countQuestionsByType } from "../questions/questions.repository.js";
 
 const SETTINGS_TOKEN_TTL_MS = 30 * 60 * 1000;
 
@@ -426,7 +426,7 @@ export const getAdminDashboardData = async () => {
   const [totalUsers, totalSkills, totalQuestions] = await Promise.all([
     User.countDocuments(),
     SkillDefinition.countDocuments({ isActive: true }),
-    Question.countDocuments({ type: "code" }),
+    countQuestionsByType("code"),
   ]);
 
   const recentUsers = await User.find()

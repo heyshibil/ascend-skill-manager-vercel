@@ -1,4 +1,3 @@
-import { Question } from "../../models/Question.js";
 import { TestHistory } from "../../models/TestHistory.js";
 import { AppError } from "../../middlewares/error.middleware.js";
 import { redisConnection } from "../../config/redis.js";
@@ -12,11 +11,18 @@ import {
   resolveRuntime,
 } from "../../utils/runtimeResolver.js";
 import { invalidateCache } from "../../utils/cache.js";
+import {
+  findByQuestionId,
+  findManyByQuestionIds,
+  findManyQuestionsForGrading,
+  findRandomQuestions,
+  findVerifiedCodeQuestion,
+} from "../questions/questions.repository.js";
 
 // -- Generate the Test and create active section --
 export const generateTest = async (
   userId: string,
-  skillName: StringConstructor,
+  skillName: string,
   expectedLevel: string,
 ) => {
   // Check existing session(test)
@@ -25,13 +31,10 @@ export const generateTest = async (
   if (existingSession) {
     const activeTest = JSON.parse(existingSession);
 
-    // Load exact same questions assigned, from redis
-    const mcqs = await Question.find(
-      { questionId: { $in: activeTest.mcqIds } },
-      { _id: 1, questionId: 1, question: 1, options: 1, level: 1 },
-    );
+    // Reload exact same questions assigned
+    const mcqs = await findManyByQuestionIds(activeTest.mcqIds);
 
-    const codeTest = await Question.findOne({ questionId: activeTest.codeId });
+    const codeTest = await findByQuestionId(activeTest.codeId);
 
     return { mcqs, codeTest };
   }
@@ -48,46 +51,33 @@ export const generateTest = async (
   // Seen Ids
   const seenIds = recentHistories.flatMap((history) => history.questionIds);
 
-  const level = expectedLevel.toLowerCase();
+  const level = expectedLevel.toLowerCase() as
+    | "beginner"
+    | "intermediate"
+    | "advanced";
 
-  // Fetch 5 random MCQs (nin 4w)
-  const mcqs = await Question.aggregate([
-    {
-      $match: {
-        skill: skillName,
-        type: "mcq",
-        level,
-        isHidden: { $ne: true },
-        questionId: { $nin: seenIds },
-      },
-    },
-    {
-      $sample: { size: 5 },
-    },
-    {
-      $project: { _id: 1, questionId: 1, question: 1, options: 1, level: 1 },
-    },
-  ]);
+  // Fetch 5 random MCQs (postgres)
+  const mcqs = await findRandomQuestions({
+    skill: skillName,
+    type: "mcq",
+    level,
+    excludeQuestionIds: seenIds,
+    count: 5,
+  });
 
   // Out of mcqs
   if (mcqs.length < 5) {
     throw new AppError("Not enough unique MCQ questions available.", 400);
   }
 
-  // Find 1 random compiler question (nin 4w)
-  const codeDbs = await Question.aggregate([
-    {
-      $match: {
-        skill: skillName,
-        type: "code",
-        level,
-        isVerified: true,
-        isHidden: { $ne: true },
-        questionId: { $nin: seenIds },
-      },
-    },
-    { $sample: { size: 1 } },
-  ]);
+  // Find 1 random compiler question (postgres)
+  const codeDbs = await findRandomQuestions({
+    skill: skillName,
+    type: "code",
+    level,
+    excludeQuestionIds: seenIds,
+    count: 1,
+  });
 
   // Out of codeDbs
   if (codeDbs.length < 1) {
@@ -101,7 +91,7 @@ export const generateTest = async (
     skillName,
     level,
     mcqIds: mcqs.map((q) => q.questionId),
-    codeId: codeTest.questionId,
+    codeId: codeTest?.questionId,
     startTime: Date.now(),
   };
 
@@ -200,17 +190,23 @@ export const gradeVerificationTest = async (
   }
 
   // Grade MCQs (40)
-  let correctMcqs = 0;
-  const mcqResults = []; // store user MCQ answers
+  // Batch fetch from postgres - no N+1 loop (mongoDB)
 
-  // compare with db options
+  const mcqIds = mcqAnswers.map((a) => a.questionId);
+
+  const dbMcqQuestions = await findManyQuestionsForGrading(mcqIds);
+
+  const mcqMap = new Map(dbMcqQuestions.map((q) => [q.questionId, q]));
+
+  let correctMcqs = 0;
+  const mcqResults: any = [];
+
   for (const answerSet of mcqAnswers) {
-    const dbQuestion = await Question.findOne({
-      questionId: answerSet.questionId,
-    });
+    const dbQuestion = mcqMap.get(answerSet.questionId);
 
     if (dbQuestion) {
       const isCorrect = dbQuestion.correctAnswerIndex === answerSet.answerIndex;
+
       if (isCorrect) correctMcqs++;
 
       mcqResults.push({
@@ -227,20 +223,28 @@ export const gradeVerificationTest = async (
   const mcqScore = (correctMcqs / 5) * 40;
 
   // Grade code (50)
-  const dbCodeQ = await Question.findOne({ questionId: codeQuestionId });
+  const dbCodeQ = await findVerifiedCodeQuestion(codeQuestionId);
+
+  if (!dbCodeQ) {
+    throw new AppError("Code question not found or not verified.", 404);
+  }
 
   const runtime = resolveRuntime(skillName);
+
   const { compilerScore } = await executeCodeTest(
     codeAnswer,
-    dbCodeQ!.testCases!,
-    dbCodeQ!.validationScript!,
+    dbCodeQ.testCases.map((tc) => ({
+      input: tc.input,
+      output: tc.expectedOutput,
+    })),
+    dbCodeQ.validationScript ?? "",
     runtime,
   );
 
   // Gemini Audit (10)
   const { aiScore, feedback } = await auditCodeWithGemini(
     codeAnswer,
-    dbCodeQ!.question!,
+    dbCodeQ.question!,
   );
 
   // Final calculation (MCQ + Code + AI audit)
@@ -329,19 +333,13 @@ export const generateBoostTest = async (
   let codeId = null;
 
   if (type === "mcq") {
-    const rawMcqs = await Question.aggregate([
-      {
-        $match: {
-          skill: skillName,
-          type: "mcq",
-          level: targetLevel,
-          isHidden: { $ne: true },
-          questionId: { $nin: seenIds },
-        },
-      },
-      { $sample: { size: 5 } },
-      { $project: { _id: 1, questionId: 1, question: 1, options: 1 } },
-    ]);
+    const rawMcqs = await findRandomQuestions({
+      skill: skillName,
+      type: "mcq",
+      level: targetLevel as "beginner" | "intermediate" | "advanced",
+      excludeQuestionIds: seenIds,
+      count: 5,
+    });
 
     if (rawMcqs.length < 5) {
       throw new AppError("Not enough unique MCQ questions available.", 400);
@@ -354,41 +352,26 @@ export const generateBoostTest = async (
       throw new AppError("Level is required for compiler test.", 400);
     }
 
-    let codeDbs = await Question.aggregate([
-      {
-        $match: {
-          skill: skillName,
-          type: "code",
-          level,
-          isVerified: true,
-          isHidden: { $ne: true },
-          questionId: { $nin: seenIds },
-        },
-      },
-      { $sample: { size: 1 } },
-    ]);
+    const safeLevel = level as "beginner" | "intermediate" | "advanced";
+
+    let codeDbs = await findRandomQuestions({
+      skill: skillName,
+      type: "code",
+      level: safeLevel,
+      excludeQuestionIds: seenIds,
+      count: 1,
+    });
 
     if (codeDbs.length < 1) {
-      // throw new AppError(
-      //   "Not enough unique code questions available for this level.",
-      //   400,
-      // );
-
       const fallbackSkill = getFallbackSkill(skillName);
 
-      codeDbs = await Question.aggregate([
-        {
-          $match: {
-            skill: fallbackSkill,
-            type: "code",
-            level,
-            isVerified: true,
-            isHidden: { $ne: true },
-            questionId: { $nin: seenIds },
-          },
-        },
-        { $sample: { size: 1 } },
-      ]);
+      codeDbs = await findRandomQuestions({
+        skill: fallbackSkill!,
+        type: "code",
+        level: safeLevel,
+        excludeQuestionIds: seenIds,
+        count: 1,
+      })
     }
 
     if (codeDbs.length < 1) {
@@ -399,7 +382,7 @@ export const generateBoostTest = async (
     }
 
     codeTest = codeDbs[0];
-    codeId = codeTest.questionId;
+    codeId = codeTest?.questionId;
   }
 
   // Cache specific boost session
@@ -441,6 +424,13 @@ export const gradeMcqBoost = async (
     throw new AppError("Invalid session data. Session invalidated.", 403);
   }
 
+  // Batch fetch from postgres - No N+1 loop complexity
+  const mcqQuestionIds = mcqAnswers.map((a) => a.questionId);
+
+  const dbMcqQuestions = await findManyQuestionsForGrading(mcqQuestionIds);
+
+  const mcqMap = new Map(dbMcqQuestions.map((q) => [q.questionId, q]));
+
   let correctMcqs = 0;
 
   for (const answerSet of mcqAnswers) {
@@ -448,9 +438,7 @@ export const gradeMcqBoost = async (
       throw new AppError("Invalid MCQ ID", 403);
     }
 
-    const dbQuestion = await Question.findOne({
-      questionId: answerSet.questionId,
-    });
+    const dbQuestion = mcqMap.get(answerSet.questionId);
 
     if (dbQuestion && dbQuestion.correctAnswerIndex === answerSet.answerIndex) {
       correctMcqs++;
@@ -509,16 +497,21 @@ export const gradeCompilerBoost = async (
     throw new AppError("Invalid session data. Session invalidated.", 403);
   }
 
-  const dbCodeQ = await Question.findOne({ questionId: codeQuestionId });
+  const dbCodeQ = await findVerifiedCodeQuestion(codeQuestionId);
+
   if (!dbCodeQ) {
     throw new AppError("Question not found", 404);
   }
 
   const runtime = resolveRuntime(skillName);
+
   const { passedCases, totalCases } = await executeCodeTest(
     codeAnswer,
-    dbCodeQ.testCases!,
-    dbCodeQ.validationScript!,
+    dbCodeQ.testCases.map((tc) => ({
+      input: tc.input,
+      output: tc.expectedOutput,
+    })),
+    dbCodeQ.validationScript ?? "",
     runtime,
   );
 
@@ -573,7 +566,7 @@ export const runCode = async (
     throw new AppError("No active test session found.", 400);
   }
 
-  const dbQuestion = await Question.findOne({ questionId });
+  const dbQuestion = await findByQuestionId(questionId);
 
   if (!dbQuestion || !dbQuestion.testCases) {
     throw new AppError("Question not found or has no test cases.", 404);
