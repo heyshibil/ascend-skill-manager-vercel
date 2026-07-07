@@ -223,7 +223,7 @@ export default function BoostCompilerTest() {
                           Expected:
                         </span>
                         <span className="text-[var(--success)] font-medium">
-                          {tc.expectedOutput }
+                          {tc.output ?? tc.expectedOutput}
                         </span>
                       </div>
                     </div>

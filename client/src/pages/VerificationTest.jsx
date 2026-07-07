@@ -425,7 +425,7 @@ export default function VerificationTest() {
                                       Expected:
                                     </span>
                                     <span className="text-[var(--success)] font-medium">
-                                      {tc.expectedOutput }
+                                      {tc.output ?? tc.expectedOutput}
                                     </span>
                                   </div>
                                 </div>

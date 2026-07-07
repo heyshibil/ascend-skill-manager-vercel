@@ -84,7 +84,10 @@ export const generateTest = async (
     throw new AppError("Not enough unique code questions available.", 400);
   }
 
-  const codeTest = codeDbs[0];
+  const questionId = codeDbs[0]?.questionId;
+  if (!questionId) return null;
+
+  const codeTest = await findByQuestionId(questionId);
 
   // -- Redis test caching --
   const sessionData = {
@@ -371,7 +374,7 @@ export const generateBoostTest = async (
         level: safeLevel,
         excludeQuestionIds: seenIds,
         count: 1,
-      })
+      });
     }
 
     if (codeDbs.length < 1) {
@@ -381,7 +384,16 @@ export const generateBoostTest = async (
       );
     }
 
-    codeTest = codeDbs[0];
+    // find question from postgreSQL
+    const questionId = codeDbs[0]?.questionId;
+    if (!questionId) return null;
+
+    const fullCodeQuestion = await findByQuestionId(questionId);
+    if (!fullCodeQuestion) {
+      throw new AppError("Failed to fetch full question details.", 500);
+    }
+
+    codeTest = fullCodeQuestion;
     codeId = codeTest?.questionId;
   }
 
