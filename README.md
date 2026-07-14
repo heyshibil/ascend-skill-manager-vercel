@@ -31,7 +31,7 @@ Ascend is a full-stack web application that measures, tracks, and grows your tec
 | Runtime | Node.js (ESM) |
 | Framework | Express 5 |
 | Language | TypeScript 5 |
-| Database | MongoDB (via Mongoose 9) |
+| Database | MongoDB (via Mongoose 9), PostgreSQL (via Prisma ORM, hosted on Neon |
 | Password hashing | Argon2 |
 | Authentication | JWT (jsonwebtoken) + HTTP-only cookies |
 | Validation | Zod v4 |
@@ -410,7 +410,7 @@ All routes are prefixed with `/api`. Rate limiting is applied at the route group
 
 ## 📈 How It Can Be Improved
 
-**Testing** — There are currently no automated tests. Adding unit tests for the decay calculator, integration tests for the auth flow, and end-to-end tests for the full verification pipeline would significantly increase confidence in changes.
+**Testing** — There are currently no automated tests.
 
 **CI/CD Pipeline** — Setting up GitHub Actions to run lint, type-check, and tests on every pull request, and to automate deployment on merges to `main`, would remove manual deployment steps.
 
@@ -498,6 +498,9 @@ EMAIL_PORT=587
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_app_password
 EMAIL_FROM=Ascend <your_email@gmail.com>
+
+# PostgreSQL (Neon)
+DATABASE_URL=postgresql://user:pass@host/dbname
 ```
 
 ### Run Development Server
