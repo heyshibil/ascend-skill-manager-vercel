@@ -264,7 +264,7 @@ Supported `mode` values: `solved`, `score`, `streak`.
 
 ## 🗃️ Database Overview
 
-Ascend uses **MongoDB** with Mongoose. All collections have `createdAt` and `updatedAt` timestamps automatically.
+Ascend uses a dual-database architecture: **MongoDB** for flexible, user-centric data, and **PostgreSQL** for the relational Questions module.
 
 ### Users
 
@@ -286,9 +286,12 @@ Key fields: `name`, `normalizedName` (unique index, lowercase), `category`, `sta
 
 ### Questions
 
-Stores both MCQ and coding questions used for verification and boost sessions.
+Questions — MCQ and coding questions used for verification and boost sessions. Originally a MongoDB collection, migrated to PostgreSQL to enforce database-level enums/constraints, replace a race-condition-prone regex ID generator with atomic sequence generation, and normalise test cases into a relational table.
+Key fields: `questionId` (unique, atomically generated), `skill`, `level` (beginner / intermediate / advanced), `type` (mcq / code), `options[]`, `correctAnswerIndex`, `starterCode`, `validationScript`, `isVerified`.
 
-Key fields: `questionId` (unique), `skill`, `level` (beginner / intermediate / advanced), `type` (mcq / code), `options[]`, `correctAnswerIndex`, `starterCode`, `validationScript`, `testCases[]`. Compound index on `{ skill, level }` for fast sampling.
+### QuestionTestCase 
+
+Normalised, relational test cases for coding questions, linked to a Question via a foreign key with cascade delete.
 
 ### TestHistory
 
