@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.test" });
 
-import { jest, test, expect, describe, afterAll } from "@jest/globals";
+import { test, expect, describe, afterAll } from "@jest/globals";
 const { prisma } = await import("../../../config/prisma.js");
 const { insertQuestion, findByQuestionId } =
   await import("../questions.repository.js");

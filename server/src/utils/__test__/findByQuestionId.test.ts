@@ -13,8 +13,10 @@ const { findByQuestionId } =
 const { prisma } = await import("../../config/prisma.js");
 
 describe("findByQuestionId", () => {
-  afterEach(() => jest.clearAllMocks());
-
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+  
   test("should return transformed question when question exists", async () => {
     const mockFindUnique = prisma.question
       .findUnique as unknown as jest.MockedFunction<any>;
@@ -62,7 +64,7 @@ describe("findByQuestionId", () => {
   });
 
   test("should return null when question does not exist", async () => {
-   const mockFindUnique = prisma.question
+    const mockFindUnique = prisma.question
       .findUnique as unknown as jest.MockedFunction<any>;
 
     mockFindUnique.mockResolvedValue(null);
