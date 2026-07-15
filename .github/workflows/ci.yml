@@ -36,3 +36,9 @@ jobs:
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Docker build check
+        run: docker build -t ascend-backend-ci .
